@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMKG Weather Dashboard</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ffffff;
+            --secondary: #e2e8f0;
+            --accent: #38bdf8;
+            --glass: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-main: #ffffff;
+            --text-muted: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1e1b4b);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 3rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1rem;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(to right, #7dd3fc, #38bdf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        .search-box {
+            position: relative;
+            z-index: 50;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .search-wrapper {
+            position: relative;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 0.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .search-wrapper:focus-within {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            padding-left: 3rem;
+            font-size: 1.1rem;
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-size: 1.2rem;
+            pointer-events: none;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .search-item {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+            padding-left: 2rem;
+        }
+
+        .weather-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: none;
+            animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .location-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--primary);
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 0.5rem 0;
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .stat-desc {
+            font-size: 1.1rem;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--accent);
+            display: none;
+            margin-top: 2rem;
+            font-size: 1.2rem;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+
+            .weather-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fa-solid fa-cloud-bolt"></i> IndoWeather</h1>
+            <p>Real-time Forecasts for every Village in Indonesia</p>
+        </div>
+
+        <div class="search-box">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" class="search-input"
+                    placeholder="Search districts or villages (e.g. Gubeng, Kuta)..." id="searchInput"
+                    autocomplete="off">
+            </div>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+
+        <div class="loading" id="loading"><i class="fa-solid fa-circle-notch"></i> Fetching weather data...</div>
+
+        <div class="weather-card" id="weatherDisplay">
+            <div class="location-title" id="locationName">Surabaya</div>
+            <div id="weatherContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const weatherDisplay = document.getElementById('weatherDisplay');
+        const loading = document.getElementById('loading');
+        const locationNameEl = document.getElementById('locationName');
+        const weatherContent = document.getElementById('weatherContent');
+
+        let debounceTimer;
+
+        // Search Logic
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value;
+            clearTimeout(debounceTimer);
+
+            if (query.length < 3) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetchLocations(query);
+            }, 300);
+        });
+
+        async function fetchLocations(query) {
+            try {
+                const res = await fetch(`/api/locations?q=${encodeURIComponent(query)}`);
+                const locations = await res.json();
+                renderSearchResults(locations);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderSearchResults(locations) {
+            searchResults.innerHTML = '';
+            if (locations.length === 0) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            locations.forEach(loc => {
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `<i class="fa-solid fa-location-dot" style="color:var(--accent); opacity:0.7"></i> ${loc.name}`;
+                div.onclick = () => {
+                    selectLocation(loc);
+                };
+                searchResults.appendChild(div);
+            });
+            searchResults.style.display = 'block';
+        }
+
+        function selectLocation(loc) {
+            searchInput.value = loc.name;
+            searchResults.style.display = 'none';
+            fetchWeather(loc.code, loc.name);
+        }
+
+        async function fetchWeather(code, name) {
+            weatherDisplay.style.display = 'none';
+            loading.style.display = 'block';
+            locationNameEl.textContent = name;
+
+            try {
+                const res = await fetch(`/api/weather?code=${code}`);
+                const data = await res.json();
+                renderWeather(data);
+                loading.style.display = 'none';
+                weatherDisplay.style.display = 'block';
+            } catch (err) {
+                console.error(err);
+                loading.textContent = "Error fetching weather.";
+            }
+        }
+
+        function renderWeather(data) {
+            const contentDiv = weatherContent;
+            contentDiv.innerHTML = '';
+
+            // Handle ADM2 Aggregated Response
+            if (data.multi === true) {
+                let html = '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">';
+                if (data.results.length === 0) {
+                    contentDiv.innerHTML = '<p>No sub-district data found.</p>';
+                    return;
+                }
+
+                data.results.forEach(res => {
+                    if (!res.data || !res.data[0] || !res.data[0].cuaca) return;
+
+                    const forecasts = res.data[0].cuaca;
+                    const locationTitle = res.location_name || "Unknown";
+
+                    // Get current/first forecast
+                    let item = null;
+                    // Find first valid item
+                    for (let dayArr of forecasts) {
+                        for (let t of dayArr) {
+                            item = t;
+                            break;
+                        }
+                        if (item) break;
+                    }
+
+                    if (item) {
+                        html += `
+                        <div class="stat-box" style="text-align:left;">
+                            <div class="stat-label" style="font-weight:bold; color:var(--text-main); font-size:1.1rem; margin-bottom:1rem;">
+                                <i class="fa-solid fa-map-pin" style="color:var(--accent)"></i> ${locationTitle}
+                            </div>
+                            <div class="stat-value">${item.t}°C</div>
+                            <div class="stat-desc">
+                                <i class="fa-solid fa-cloud"></i> ${item.weather_desc}
+                            </div>
+                            <div class="stat-label" style="margin-top:0.5rem;">
+                                <i class="fa-solid fa-droplet"></i> Humidity: ${item.hu}%
+                            </div>
+                        </div>
+                     `;
+                    }
+                });
+                html += '</div>';
+                contentDiv.innerHTML = html;
+                return;
+            }
+
+            // Single Location Logic
+            if (!data.data || !data.data[0] || !data.data[0].cuaca) {
+                contentDiv.innerHTML = '<p>No weather data available for this location.</p>';
+                return;
+            }
+
+            const forecasts = data.data[0].cuaca;
+
+            let html = '<div class="weather-grid">';
+
+            let count = 0;
+            for (let dayArr of forecasts) {
+                for (let item of dayArr) {
+                    if (count >= 4) break;
+
+                    html += `
+                    <div class="stat-box">
+                        <div class="stat-label"><i class="fa-regular fa-clock"></i> ${item.local_datetime || 'N/A'}</div>
+                        <div class="stat-value">${item.t}°C</div>
+                        <div class="stat-desc">
+                            <i class="fa-solid fa-cloud-sun"></i> ${item.weather_desc}
+                        </div>
+                        <div class="stat-label" style="margin-top:0.5rem">
+                            <i class="fa-solid fa-droplet"></i> Hum: ${item.hu}%
+                        </div>
+                    </div>
+                 `;
+                    count++;
+                }
+                if (count >= 4) break;
+            }
+
+            html += '</div>';
+            contentDiv.innerHTML = html;
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

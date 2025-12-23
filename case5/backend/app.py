@@ -16,7 +16,7 @@ BMKG_API_URL = "https://api.bmkg.go.id/publik/prakiraan-cuaca"
 # Load locations into a list of dicts for simple search
 locations = []
 try:
-    with open(CSV_PATH, mode='r', encoding='utf-8') as f:e.
+    with open(CSV_PATH, mode='r', encoding='utf-8') as f:
         reader = csv.reader(f)
         for row in reader:
             if len(row) >= 2:
